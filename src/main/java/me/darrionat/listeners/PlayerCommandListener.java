@@ -5,15 +5,14 @@ import java.util.concurrent.TimeUnit;
 import me.darrionat.services.MessageService;
 import me.darrionat.services.PermissionService;
 
-import net.md_5.bungee.api.event.ChatEvent;
-import net.md_5.bungee.api.plugin.Listener;
-import net.md_5.bungee.api.plugin.Plugin;
-import net.md_5.bungee.api.connection.ProxiedPlayer;
-import net.md_5.bungee.event.EventHandler;
-import net.md_5.bungee.event.EventPriority;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import net.luckperms.api.context.MutableContextSet;
-
 import net.luckperms.api.LuckPermsProvider;
 import net.luckperms.api.model.user.User;
 import net.luckperms.api.query.QueryOptions;
@@ -22,22 +21,19 @@ public class PlayerCommandListener implements Listener {
 	private MessageService messageService;
 	private PermissionService permissionService;
 
-	private Plugin plugin;
+	private JavaPlugin plugin;
 
-	public PlayerCommandListener(Plugin plugin, MessageService messageService, PermissionService permissionService) {
+	public PlayerCommandListener(JavaPlugin plugin, MessageService messageService, PermissionService permissionService) {
 		this.plugin = plugin;
 		this.messageService = messageService;
 		this.permissionService = permissionService;
 	}
 
-	@EventHandler(priority = EventPriority.HIGHEST)
-	public void onChatEvent(ChatEvent e) {
-		if (!(e.getSender() instanceof ProxiedPlayer)) return;
-		if (!(e.isCommand())) return;
-
-		ProxiedPlayer p = (ProxiedPlayer)e.getSender();
-
+	@EventHandler
+	public void onCommand(PlayerCommandPreprocessEvent e) {
+		Player p = e.getPlayer();
 		final String label = getLabel(e.getMessage().replace("/", ""));
+
 		if (!permissionService.permissionDefined(label))
 			return;
 
@@ -45,23 +41,22 @@ public class PlayerCommandListener implements Listener {
 			return;
 
 		// Check asynchronously
-		plugin.getProxy().getScheduler().schedule(plugin, new Runnable() {
+		new BukkitRunnable() {
             @Override
             public void run() {
 				final String permission = permissionService.getPermission(label);
-				final User user = LuckPermsProvider.get().getPlayerAdapter(ProxiedPlayer.class).getUser(p);
+				final User user = LuckPermsProvider.get().getPlayerAdapter(Player.class).getUser(p);
 				final QueryOptions query = user.getQueryOptions();
-				final String server = query.context().getAnyValue("world").get();
+				final String world = query.context().getAnyValue("world").get();
 
-				if (permissionService.ignoreServer(server)) return;
+				if (permissionService.ignoreWorld(world)) return;
 
-				final MutableContextSet context = permissionService.getQueryFromServer(server);
-				if (permissionService.defaultHasPermission(context, permission)) return;
+				if (permissionService.defaultHasPermission(query.context(), permission)) return;
 
-				final String origin = permissionService.getPermissionOrigin(context, user, permission);
+				final String origin = permissionService.getPermissionOrigin(query.context(), user, permission);
 				messageService.alertPlayer(p, label, permission, origin);
             }
-        }, 0, TimeUnit.SECONDS);
+        }.runTaskAsynchronously(plugin);
 	}
 
 	private String getLabel(String message) {

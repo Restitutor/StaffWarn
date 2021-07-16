@@ -28,7 +28,7 @@ public class Bootstrapper {
 		this.fileRepository = new FileRepository(plugin);
 		this.commandPermissionRepository = new CommandPermissionRepository(fileRepository);
 
-		this.configService = new ConfigService(fileRepository.getDataConfigWithDefault(FileRepository.CONFIG));
+		this.configService = new ConfigService(fileRepository.getDataConfig(FileRepository.CONFIG));
 		this.messageService = new MessageService(fileRepository);
 		this.permissionService = new PermissionService(configService, commandPermissionRepository);
 	}

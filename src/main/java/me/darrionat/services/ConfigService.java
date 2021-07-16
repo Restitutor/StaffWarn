@@ -1,12 +1,12 @@
 package me.darrionat.services;
 
 import java.util.HashSet;
-import net.md_5.bungee.config.Configuration;
+import org.bukkit.configuration.file.FileConfiguration;
 
 public class ConfigService {
-	private Configuration config;
+	private FileConfiguration config;
 
-	public ConfigService(Configuration config) {
+	public ConfigService(FileConfiguration config) {
 		this.config = config;
 	}
 
@@ -14,7 +14,7 @@ public class ConfigService {
 		return new HashSet<String>(config.getStringList("defaultGroups"));
 	}
 
-	public HashSet<String> getExcludedServers() {
-		return new HashSet<String>(config.getStringList("excludedServers"));
+	public HashSet<String> getExcludedWorlds() {
+		return new HashSet<String>(config.getStringList("excludedWorlds"));
 	}
 }

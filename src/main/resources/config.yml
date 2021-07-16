@@ -1,4 +1,4 @@
 defaultGroups:
 - default
-excludedServers:
-- hub
+excludedWorlds:
+- spawn
