@@ -1,1 +1,4 @@
-defaultGroup: default
+defaultGroups:
+- default
+excludedServers:
+- hub

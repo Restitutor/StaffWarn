@@ -2,7 +2,7 @@ package me.darrionat.repositories;
 
 import java.util.HashMap;
 
-import org.bukkit.configuration.file.FileConfiguration;
+import net.md_5.bungee.config.Configuration;
 
 public class CommandPermissionRepository {
 	private FileRepository fileRepository;
@@ -16,9 +16,9 @@ public class CommandPermissionRepository {
 	}
 
 	public void init() {
-		FileConfiguration commandConfig = fileRepository.getDataConfig(FileRepository.COMMAND_PERMISSIONS);
+		final Configuration commandConfig = fileRepository.getDataConfig(FileRepository.COMMAND_PERMISSIONS);
 
-		for (String key : commandConfig.getKeys(false))
+		for (String key : commandConfig.getKeys())
 			labelPermissionMap.put(key, commandConfig.getString(key));
 	}
 
@@ -28,5 +28,9 @@ public class CommandPermissionRepository {
 
 	public String getPermission(String label) {
 		return labelPermissionMap.get(label);
+	}
+
+	public boolean permissionDefined(String label) {
+		return labelPermissionMap.containsKey(label);
 	}
 }

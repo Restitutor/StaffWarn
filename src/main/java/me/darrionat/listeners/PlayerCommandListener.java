@@ -1,45 +1,72 @@
 package me.darrionat.listeners;
 
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import java.util.concurrent.TimeUnit;
 
-import me.darrionat.StaffWarn;
 import me.darrionat.services.MessageService;
 import me.darrionat.services.PermissionService;
+
+import net.md_5.bungee.api.event.ChatEvent;
+import net.md_5.bungee.api.plugin.Listener;
+import net.md_5.bungee.api.plugin.Plugin;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
+import net.md_5.bungee.event.EventHandler;
+import net.md_5.bungee.event.EventPriority;
+
+import net.luckperms.api.context.MutableContextSet;
+
+import net.luckperms.api.LuckPermsProvider;
+import net.luckperms.api.model.user.User;
+import net.luckperms.api.query.QueryOptions;
 
 public class PlayerCommandListener implements Listener {
 	private MessageService messageService;
 	private PermissionService permissionService;
 
-	public PlayerCommandListener(StaffWarn plugin, MessageService messageService, PermissionService permissionService) {
-		Bukkit.getPluginManager().registerEvents(this, plugin);
+	private Plugin plugin;
+
+	public PlayerCommandListener(Plugin plugin, MessageService messageService, PermissionService permissionService) {
+		this.plugin = plugin;
 		this.messageService = messageService;
 		this.permissionService = permissionService;
 	}
 
-	@EventHandler
-	public void onCommand(PlayerCommandPreprocessEvent e) {
-		Player p = e.getPlayer();
-		String label = getLabel(e.getMessage().replace("/", ""));
+	@EventHandler(priority = EventPriority.HIGHEST)
+	public void onChatEvent(ChatEvent e) {
+		if (!(e.getSender() instanceof ProxiedPlayer)) return;
+		if (!(e.isCommand())) return;
 
+		ProxiedPlayer p = (ProxiedPlayer)e.getSender();
+
+		final String label = getLabel(e.getMessage().replace("/", ""));
 		if (!permissionService.permissionDefined(label))
 			return;
-		if (!permissionService.playerCanUseCommand(p, label))
+
+		if (!p.hasPermission(permissionService.getPermission(label)))
 			return;
 
-		String permission = permissionService.getPermission(label);
-		if (permissionService.defaultHasPermission(permission))
-			return;
+		// Check asynchronously
+		plugin.getProxy().getScheduler().schedule(plugin, new Runnable() {
+            @Override
+            public void run() {
+				final String permission = permissionService.getPermission(label);
+				final User user = LuckPermsProvider.get().getPlayerAdapter(ProxiedPlayer.class).getUser(p);
+				final QueryOptions query = user.getQueryOptions();
+				final String server = query.context().getAnyValue("world").get();
 
-		messageService.alertPlayer(p, label, permission);
+				if (permissionService.ignoreServer(server)) return;
+
+				final MutableContextSet context = permissionService.getQueryFromServer(server);
+				if (permissionService.defaultHasPermission(context, permission)) return;
+
+				final String origin = permissionService.getPermissionOrigin(context, user, permission);
+				messageService.alertPlayer(p, label, permission, origin);
+            }
+        }, 0, TimeUnit.SECONDS);
 	}
 
 	private String getLabel(String message) {
 		String label;
-		int i = message.indexOf(' ');
+		final int i = message.indexOf(' ');
 		try {
 			label = message.substring(0, i);
 		} catch (StringIndexOutOfBoundsException exe) {
@@ -47,5 +74,4 @@ public class PlayerCommandListener implements Listener {
 		}
 		return label;
 	}
-
 }

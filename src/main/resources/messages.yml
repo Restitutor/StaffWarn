@@ -1,4 +1,4 @@
 prefix:
   enabled: false
   prefix: '&4Staff Alert: '
-alert: '&7Default players lack the permission &e%permission% &7so they cannot use &e%command%'
+alert: '&7Non-staff lack &e%permission% &7from &e%origin% &7so they cannot use &e%command%'

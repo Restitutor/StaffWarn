@@ -1,8 +1,8 @@
 package me.darrionat.services;
 
-import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.Player;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
+import net.md_5.bungee.config.Configuration;
+import net.md_5.bungee.api.chat.TextComponent;
 
 import me.darrionat.repositories.FileRepository;
 import me.darrionat.statics.Utils;
@@ -14,7 +14,7 @@ public class MessageService {
 	private static final String ALERT = "alert";
 
 	private FileRepository fileRepository;
-	private FileConfiguration messagesConfig;
+	private Configuration messagesConfig;
 
 	public MessageService(FileRepository fileRepository) {
 		this.fileRepository = fileRepository;
@@ -25,10 +25,11 @@ public class MessageService {
 		this.messagesConfig = fileRepository.getDataConfig(FileRepository.MESSAGES);
 	}
 
-	public void alertPlayer(Player p, String label, String permission) {
+	public void alertPlayer(ProxiedPlayer p, String label, String permission, String origin) {
 		String msg = getMessage(ALERT);
 		msg = msg.replace("%command%", label);
 		msg = msg.replace("%permission%", permission);
+		msg = msg.replace("%origin%", origin);
 		sendMessage(p, msg);
 	}
 
@@ -38,10 +39,12 @@ public class MessageService {
 	 * @param sender the {@code CommandSender} to send to
 	 * @param msg    the message to send
 	 */
-	private void sendMessage(CommandSender sender, String msg) {
+	private void sendMessage(ProxiedPlayer p, String msg) {
 		if (messagesConfig.getBoolean(PREFIX_ENABLED))
 			msg = messagesConfig.getString(PREFIX) + msg;
-		sender.sendMessage(Utils.chat(msg));
+		
+		final TextComponent text = new TextComponent(Utils.chat(msg));
+		p.sendMessage(text);
 	}
 
 	public String getMessage(String path) {

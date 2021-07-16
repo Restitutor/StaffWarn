@@ -1,7 +1,6 @@
 name: StaffWarn
 main: me.darrionat.StaffWarn
 description: Alerts staff when they use a permission that is not available to other players
-version: 1.0.1
+version: 1.0.2
 author: Darrionat
-api-version: 1.13
 depend: [LuckPerms]

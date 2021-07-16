@@ -1,6 +1,7 @@
 package me.darrionat;
 
-import org.bukkit.plugin.java.JavaPlugin;
+import net.md_5.bungee.api.ProxyServer;
+import net.md_5.bungee.api.plugin.Plugin;
 
 import me.darrionat.listeners.PlayerCommandListener;
 import me.darrionat.services.MessageService;
@@ -8,8 +9,7 @@ import me.darrionat.services.PermissionService;
 import me.darrionat.statics.Bootstrapper;
 import me.darrionat.statics.Utils;
 
-public class StaffWarn extends JavaPlugin {
-
+public class StaffWarn extends Plugin {
 	private MessageService messageService;
 	private PermissionService permissionService;
 
@@ -18,7 +18,7 @@ public class StaffWarn extends JavaPlugin {
 		initFields();
 
 		systemLog("Registering listeners");
-		new PlayerCommandListener(this, messageService, permissionService);
+		ProxyServer.getInstance().getPluginManager().registerListener(this, new PlayerCommandListener(this, messageService, permissionService));
 	}
 
 	public void initFields() {
@@ -28,12 +28,7 @@ public class StaffWarn extends JavaPlugin {
 		this.permissionService = bootstrapper.getPermissionService();
 	}
 
-	@Override
-	public void onDisable() {
-
-	}
-
 	public void systemLog(String s) {
-		System.out.println(Utils.chat("[" + getName() + " " + getDescription().getVersion() + "] " + s));
+		System.out.println(Utils.chat("[" + getDescription().getName() + " " + getDescription().getVersion() + "] " + s));
 	}
 }

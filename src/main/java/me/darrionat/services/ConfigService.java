@@ -1,24 +1,20 @@
 package me.darrionat.services;
 
-import org.bukkit.configuration.file.FileConfiguration;
-
-import me.darrionat.StaffWarn;
+import java.util.HashSet;
+import net.md_5.bungee.config.Configuration;
 
 public class ConfigService {
+	private Configuration config;
 
-	private StaffWarn plugin;
-	private FileConfiguration config;
-
-	public ConfigService(StaffWarn plugin) {
-		this.plugin = plugin;
-		init();
+	public ConfigService(Configuration config) {
+		this.config = config;
 	}
 
-	public void init() {
-		this.config = plugin.getConfig();
+	public HashSet<String> getDefaultGroups() {
+		return new HashSet<String>(config.getStringList("defaultGroups"));
 	}
 
-	public String getDefaultGroup() {
-		return config.getString("defaultGroup");
+	public HashSet<String> getExcludedServers() {
+		return new HashSet<String>(config.getStringList("excludedServers"));
 	}
 }

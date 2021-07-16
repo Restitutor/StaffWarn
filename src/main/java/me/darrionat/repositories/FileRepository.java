@@ -3,11 +3,12 @@ package me.darrionat.repositories;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.UUID;
 
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
+import net.md_5.bungee.config.Configuration;
+import net.md_5.bungee.config.ConfigurationProvider;
+import net.md_5.bungee.config.YamlConfiguration;
+
 
 import me.darrionat.StaffWarn;
 
@@ -38,7 +39,7 @@ public class FileRepository {
 		for (String fileName : CONFIG_NAMES) {
 			if (!fileExists(fileName)) {
 				plugin.systemLog("Saving " + fileName + ".yml");
-				plugin.saveResource(fileName + ".yml", false);
+				saveResource(fileName);
 				continue;
 			}
 			plugin.systemLog("Updating " + fileName + ".yml");
@@ -55,6 +56,16 @@ public class FileRepository {
 			if (!dirExists(dir))
 				mkDir(dir);
 		}
+	}
+
+	private Configuration getJarConfig(String fileName) {
+		final InputStream is = plugin.getResourceAsStream(fileName + ".yml");
+		return ConfigurationProvider.getProvider(YamlConfiguration.class).load(is);
+	}
+
+	private void saveResource(String fileName) {
+		final Configuration jarConfig = getJarConfig(fileName);
+		saveConfigFile(fileName, jarConfig);
 	}
 
 	public void setupFile(String fileName) {
@@ -87,18 +98,39 @@ public class FileRepository {
 		new File(plugin.getDataFolder(), fileName + ".yml").delete();
 	}
 
-	public FileConfiguration getDataConfig(String fileName) {
-		File file = new File(plugin.getDataFolder(), fileName + ".yml");
-		return YamlConfiguration.loadConfiguration(file);
+	public Configuration getDataConfigWithDefault(String fileName) {
+		final Configuration jarConfig = getJarConfig(fileName);
+		File file = getDataFile(fileName);
+
+		try {
+			return ConfigurationProvider.getProvider(YamlConfiguration.class).load(file, jarConfig);
+		} catch (IOException e) {
+			e.printStackTrace();
+			setupFile(file);
+			return getDataConfigWithDefault(fileName);
+		}
+	}
+
+	public Configuration getDataConfig(String fileName) {
+		final File file = getDataFile(fileName);
+
+		try {
+			return ConfigurationProvider.getProvider(YamlConfiguration.class).load(file);
+		} catch (IOException e) {
+			e.printStackTrace();
+			setupFile(file);
+			return getDataConfig(fileName);
+		}
 	}
 
 	public File getDataFile(String fileName) {
 		return new File(plugin.getDataFolder(), fileName + ".yml");
 	}
 
-	public void saveConfigFile(String fileName, FileConfiguration dataConfig) {
+	public void saveConfigFile(String fileName, Configuration dataConfig) {
 		try {
-			dataConfig.save(new File(plugin.getDataFolder(), fileName + ".yml"));
+			File file = getDataFile(fileName);
+			ConfigurationProvider.getProvider(YamlConfiguration.class).save(dataConfig, file);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -113,21 +145,13 @@ public class FileRepository {
 	}
 
 	public void matchConfig(String fileName) {
-		InputStream is = plugin.getResource(fileName + ".yml");
+		// Add new keys from jar
+		Configuration config = getDataConfigWithDefault(fileName);
 
-		if (is == null)
-			return;
-
-		FileConfiguration config = getDataConfig(fileName);
-		YamlConfiguration jarConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(is));
-
-		for (String key : jarConfig.getKeys(true))
-			if (!config.contains(key)) {
-				config.createSection(key);
-				config.set(key, jarConfig.get(key));
-			}
-
-		for (String key : config.getConfigurationSection("").getKeys(true))
+		// Regression
+		// This is a shallow search but the Spigot version uses a deep search
+		final Configuration jarConfig = getJarConfig(fileName);
+		for (String key : config.getKeys())
 			if (!jarConfig.contains(key))
 				config.set(key, null);
 
