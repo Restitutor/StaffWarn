@@ -29,6 +29,6 @@ public class StaffWarn extends Plugin {
 	}
 
 	public void systemLog(String s) {
-		System.out.println(Utils.chat("[" + getDescription().getName() + " " + getDescription().getVersion() + "] " + s));
+		this.getLogger().info(Utils.chat("[" + getDescription().getName() + " " + getDescription().getVersion() + "] " + s));
 	}
 }
