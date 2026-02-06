@@ -1,0 +1,11 @@
+name: ${name}
+version: ${version}
+description: ${description}
+api-version: "${apiVersion}"
+main: me.arcator.staffwarn.StaffWarn
+loader: me.arcator.staffwarn.StaffWarnLoader
+dependencies:
+  server:
+    LuckPerms:
+      required: true
+      load: BEFORE

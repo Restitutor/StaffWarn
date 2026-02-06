@@ -1,0 +1,40 @@
+# Groups whose permissions are considered "normal" - no alert if these groups have the permission
+defaultGroups:
+  - default
+
+# Worlds where alerts are suppressed entirely
+excludedWorlds:
+  - spawn
+
+# MiniMessage format. Placeholders: %command%, %permission%, %origin%
+alert: "<gray>Non-staff lack <yellow>%permission%</yellow> <gray>from <yellow>%origin%</yellow> <gray>so they cannot use <yellow>%command%</yellow>"
+
+# Permission overrides - checked BEFORE Paper's command permission.
+# Use this to correct commands where Paper reports the wrong permission,
+# especially for plugins with subcommands (CoreProtect, WorldEdit, etc.).
+#
+# Common CoreProtect subcommands (remove entries you don't want monitored):
+overrides:
+  "co i": coreprotect.inspect
+  "co in": coreprotect.inspect
+  "co inspect": coreprotect.inspect
+  "co l": coreprotect.lookup
+  "co lookup": coreprotect.lookup
+  "co rb": coreprotect.rollback
+  "co rollback": coreprotect.rollback
+  "co rs": coreprotect.restore
+  "co restore": coreprotect.restore
+  "co purge": coreprotect.purge
+  "co reload": coreprotect.reload
+  "co status": coreprotect.status
+
+# Verbose debug logging - turn on for live testing, off for production
+debug: false
+
+# Discord webhook - leave URL empty to disable
+discord:
+  webhookUrl: ""
+  # Plain text with Discord markdown. Placeholders: %player%, %command%, %permission%, %origin%, %server%, %world%
+  message: "**%player%** used **%command%** (requires **%permission%** from **%origin%**) [Server: **%server%**, World: **%world%**]"
+  # Show the player's Minecraft skin as the webhook avatar and their username as the sender name
+  usePlayerIdentity: true
